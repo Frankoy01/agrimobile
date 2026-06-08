@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>My Profile – AgriMobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .profile-card {
+            background: linear-gradient(145deg, #fafdfa, #f0f8f0);
+            border-radius: 28px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 12px 0;
+            align-items: center;
+        }
+        .info-label {
+            width: 140px;
+            font-weight: 600;
+            color: #2e7d32;
+        }
+        .info-value {
+            flex: 1;
+            color: #333;
+        }
+        .info-value input, .info-value textarea {
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 350px;
+        }
+        .readonly-text {
+            padding: 10px 0;
+            color: #555;
+        }
+        .btn-edit {
+            background: #ff9800;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-edit:hover { background: #e68900; }
+        .btn-save {
+            background: #2e7d32;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .btn-cancel {
+            background: #ddd;
+            color: #333;
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+        }
+        .edit-actions { margin-top: 20px; display: none; }
+        .edit-actions.show { display: block; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .card img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 16px;
+        }
+        .price { font-size: 1.3rem; font-weight: bold; color: #2e7d32; }
+        .empty-message { text-align: center; padding: 40px; color: #666; }
+        .logout-btn {
+            background: #d32f2f;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            width: 100%;
+            max-width: 250px;
+            margin: 20px auto 0 auto;
+            display: block;
+            transition: all 0.2s ease;
+        }
+        .logout-btn:hover {
+            background: #b71c1c;
+            transform: translateY(-2px);
+        }
+        .footer-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e8f5e9;
+            text-align: center;
+        }
+        @media (max-width: 768px) { .info-label { width: 100%; margin-bottom: 5px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="flex-between" style="margin-bottom: 20px;">
+            <h1>My Profile</h1>
+            <button onclick="history.back()" class="btn btn-secondary">Back</button>
+        </div>
+
+        <div class="profile-card">
+            <div class="flex-between" style="margin-bottom: 15px;">
+                <h2>Profile Information</h2>
+                <button id="editProfileBtn" class="btn-edit">Edit Profile</button>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Display Name:</div>
+                <div class="info-value">
+                    <span id="displayNameText" class="readonly-text"></span>
+                    <input type="text" id="displayNameInput" style="display:none;" placeholder="Display Name">
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Username:</div>
+                <div class="info-value">
+                    <span id="usernameText" class="readonly-text"></span>
+                    <input type="text" id="usernameInput" style="display:none;" placeholder="Username">
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Email:</div>
+                <div class="info-value"><span id="userEmail" class="readonly-text"></span></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Role:</div>
+                <div class="info-value"><span id="userRole" class="readonly-text"></span></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Address:</div>
+                <div class="info-value">
+                    <span id="addressText" class="readonly-text"></span>
+                    <textarea id="addressInput" style="display:none;" rows="3" placeholder="Your farm or business address"></textarea>
+                </div>
+            </div>
+
+            <div id="editActions" class="edit-actions">
+                <button id="saveProfileBtn" class="btn-save">Save Changes</button>
+                <button id="cancelEditBtn" class="btn-cancel">Cancel</button>
+            </div>
+        </div>
+
+        <div id="farmerProductsSection" style="display: none;">
+            <h2>My Listed Products</h2>
+            <div id="myProductsContainer" class="grid">Loading...</div>
+        </div>
+        <div id="farmerOrdersSection" style="display: none;">
+            <h2>Orders on My Products</h2>
+            <div id="farmerOrdersContainer" class="grid">Loading...</div>
+        </div>
+        <div id="buyerPurchasesSection" style="display: none;">
+            <h2>My Purchases</h2>
+            <div id="myPurchasesContainer" class="grid">Loading...</div>
+        </div>
+
+        <div class="footer-section">
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getUser, apiRequest } from './js/api.js';
+        import { setLanguage, t } from './js/translations.js';
+        
+        window.setLanguage = setLanguage;
+        
+        const user = getUser();
+        if (!user) location.href = 'login.html';
+        
+        let currentUser = user;
+        let isEditing = false;
+        
+        async function handleLogout() {
+            try {
+                await fetch('http://localhost/agrimobile/backend/logout.php', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            } catch(e) {
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            }
+        }
+        
+        async function loadProfile() {
+            try {
+                const profile = await apiRequest('users.php');
+                document.getElementById('displayNameText').innerText = profile.display_name || profile.username || 'N/A';
+                document.getElementById('usernameText').innerText = profile.username || 'N/A';
+                document.getElementById('userEmail').innerText = profile.email;
+                let roleText = profile.role === 'farmer' ? 'Farmer' : (profile.role === 'buyer' ? 'Buyer' : (profile.role === 'admin' ? 'Admin' : profile.role));
+                document.getElementById('userRole').innerText = roleText;
+                document.getElementById('addressText').innerText = profile.address || 'Not provided';
+                document.getElementById('addressInput').value = profile.address || '';
+                currentUser = profile;
+                localStorage.setItem('user', JSON.stringify(profile));
+                
+                if (profile.role === 'farmer') {
+                    document.getElementById('farmerProductsSection').style.display = 'block';
+                    loadMyProducts();
+                    loadFarmerOrders();
+                } else if (profile.role === 'buyer') {
+                    document.getElementById('buyerPurchasesSection').style.display = 'block';
+                    loadMyPurchases();
+                }
+            } catch(err) { console.error(err); }
+        }
+        
+        async function loadMyProducts() {
+            const container = document.getElementById('myProductsContainer');
+            try {
+                const products = await apiRequest('products.php?my=1');
+                if (!products.length) { container.innerHTML = '<p class="empty-message">No products listed yet.</p>'; return; }
+                container.innerHTML = products.map(p => `
+                    <div class="card">
+                        <img src="${p.image_url || 'https://via.placeholder.com/300'}" onerror="this.src='https://via.placeholder.com/300'">
+                        <h3>${escapeHtml(p.name)}</h3>
+                        <div class="price">₱${p.price}/kg</div>
+                        <p>Stock: ${p.quantity} kg</p>
+                        <p>Origin: ${p.origin || 'Philippines'}</p>
+                    </div>
+                `).join('');
+            } catch(err) { container.innerHTML = `<p class="empty-message">Error loading products.</p>`; }
+        }
+        
+        async function loadFarmerOrders() {
+            const container = document.getElementById('farmerOrdersContainer');
+            try {
+                const orders = await apiRequest('orders.php');
+                if (!orders.length) { container.innerHTML = '<p class="empty-message">No orders yet.</p>'; return; }
+                container.innerHTML = orders.map(o => `
+                    <div class="card">
+                        <h3>${escapeHtml(o.product_name)}</h3>
+                        <p>Buyer: ${o.buyer_name || o.buyer_email}</p>
+                        <p>Quantity: ${o.quantity} kg</p>
+                        <p>Total: ₱${((o.price||0)*o.quantity).toFixed(2)}</p>
+                        <p>Received: ${o.product_received ? 'Yes' : 'No'}</p>
+                        <p>Paid: ${o.payment_received ? 'Yes' : 'No'}</p>
+                    </div>
+                `).join('');
+            } catch(err) { container.innerHTML = `<p class="empty-message">Error loading orders.</p>`; }
+        }
+        
+        async function loadMyPurchases() {
+            const container = document.getElementById('myPurchasesContainer');
+            try {
+                const orders = await apiRequest('orders.php');
+                if (!orders.length) { container.innerHTML = '<p class="empty-message">No purchases yet.</p>'; return; }
+                container.innerHTML = orders.map(o => `
+                    <div class="card">
+                        <img src="${o.image_url || 'https://via.placeholder.com/300'}" onerror="this.src='https://via.placeholder.com/300'">
+                        <h3>${escapeHtml(o.product_name)}</h3>
+                        <p>Quantity: ${o.quantity} kg</p>
+                        <p>Total: ₱${((o.price||0)*o.quantity).toFixed(2)}</p>
+                        <p>Received: ${o.product_received ? 'Yes' : 'No'}</p>
+                        <p>Paid: ${o.payment_received ? 'Yes' : 'No'}</p>
+                    </div>
+                `).join('');
+            } catch(err) { container.innerHTML = `<p class="empty-message">Error loading purchases.</p>`; }
+        }
+        
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m)); }
+        
+        document.getElementById('editProfileBtn').onclick = () => {
+            if (isEditing) return;
+            isEditing = true;
+            document.getElementById('displayNameText').style.display = 'none';
+            document.getElementById('displayNameInput').style.display = 'block';
+            document.getElementById('displayNameInput').value = currentUser.display_name || '';
+            document.getElementById('usernameText').style.display = 'none';
+            document.getElementById('usernameInput').style.display = 'block';
+            document.getElementById('usernameInput').value = currentUser.username || '';
+            document.getElementById('addressText').style.display = 'none';
+            document.getElementById('addressInput').style.display = 'block';
+            document.getElementById('addressInput').value = currentUser.address || '';
+            document.getElementById('editActions').classList.add('show');
+            this.style.display = 'none';
+        };
+        
+        document.getElementById('cancelEditBtn').onclick = () => {
+            isEditing = false;
+            document.getElementById('displayNameText').style.display = 'block';
+            document.getElementById('displayNameInput').style.display = 'none';
+            document.getElementById('usernameText').style.display = 'block';
+            document.getElementById('usernameInput').style.display = 'none';
+            document.getElementById('addressText').style.display = 'block';
+            document.getElementById('addressInput').style.display = 'none';
+            document.getElementById('editActions').classList.remove('show');
+            document.getElementById('editProfileBtn').style.display = 'block';
+        };
+        
+        document.getElementById('saveProfileBtn').onclick = async () => {
+            const display_name = document.getElementById('displayNameInput').value;
+            const username = document.getElementById('usernameInput').value;
+            const address = document.getElementById('addressInput').value;
+            try {
+                await apiRequest('auth.php?action=update_profile', 'POST', { display_name, username, address });
+                alert('Profile updated successfully!');
+                currentUser.display_name = display_name;
+                currentUser.username = username;
+                currentUser.address = address;
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                document.getElementById('displayNameText').innerText = display_name || username;
+                document.getElementById('usernameText').innerText = username || display_name;
+                document.getElementById('addressText').innerText = address || 'Not provided';
+                isEditing = false;
+                document.getElementById('displayNameText').style.display = 'block';
+                document.getElementById('displayNameInput').style.display = 'none';
+                document.getElementById('usernameText').style.display = 'block';
+                document.getElementById('usernameInput').style.display = 'none';
+                document.getElementById('addressText').style.display = 'block';
+                document.getElementById('addressInput').style.display = 'none';
+                document.getElementById('editActions').classList.remove('show');
+                document.getElementById('editProfileBtn').style.display = 'block';
+            } catch(err) { alert('Error: ' + err.message); }
+        };
+        
+        document.getElementById('logoutBtn').onclick = handleLogout;
+        
+        loadProfile();
+    </script>
+</body>
+</html>

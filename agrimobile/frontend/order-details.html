@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details – AgriMobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="flex-between" style="margin-bottom: 20px;">
+            <h1>Order Details</h1>
+            <button onclick="history.back()" class="btn btn-secondary">← Back</button>
+        </div>
+        <div id="orderInfo" class="profile-card">Loading...</div>
+        
+        <div id="paymentNote" style="display: none; background: #fff3e0; padding: 20px; border-radius: 20px; margin: 20px 0;">
+            <h3>Payment Instructions</h3>
+            <p>Please coordinate payment directly with the farmer. You can pay via:</p>
+            <ul style="margin: 10px 0 0 20px;">
+                <li>Cash (upon delivery)</li>
+                <li>GCash / PayMaya</li>
+                <li>Bank Transfer</li>
+                <li>Remittance Center</li>
+            </ul>
+            <p style="margin-top: 10px;"><strong>After payment, the farmer will mark it as received here.</strong></p>
+        </div>
+        
+        <div id="farmerActions" style="display: none;"></div>
+        <div id="paymentHistory"></div>
+    </div>
+    <script type="module">
+        import { apiRequest, getUser, recordPayment, updateOrderStatus } from './js/api.js';
+        import { setLanguage, t } from './js/translations.js';
+        window.setLanguage = setLanguage;
+        const user = getUser();
+        if (!user) location.href = 'login.html';
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+        if (!orderId) { alert('No order ID'); window.location.href = 'orders.html'; }
+        async function loadOrder() {
+            const orders = await apiRequest('orders.php', 'GET');
+            const order = orders.find(o => o.id == orderId);
+            if (!order) { document.getElementById('orderInfo').innerHTML = '<p>Order not found</p>'; return; }
+            const total = (order.price || 0) * order.quantity;
+            const paid = order.total_paid || 0;
+            document.getElementById('orderInfo').innerHTML = `
+                <p><strong>Product:</strong> ${escapeHtml(order.product_name)}</p>
+                <p><strong>Quantity:</strong> ${order.quantity} kg</p>
+                <p><strong>Total Amount:</strong> ₱${total.toFixed(2)}</p>
+                <p><strong>Paid:</strong> ₱${paid.toFixed(2)}</p>
+                <p><strong>Remaining:</strong> ₱${(total - paid).toFixed(2)}</p>
+                <p><strong>Status:</strong> ${order.status}</p>
+                <p><strong>Product Received:</strong> ${order.product_received ? 'Yes' : 'No'}</p>
+                <p><strong>Payment Received:</strong> ${order.payment_received ? 'Yes' : 'No'}</p>
+                ${order.buyer_email ? `<p><strong> Buyer:</strong> ${escapeHtml(order.buyer_email)}</p>` : ''}
+                <p><strong> Date:</strong> ${new Date(order.order_date).toLocaleString()}</p>
+            `;
+            if (user.role === 'buyer' && !order.product_received) {
+                document.getElementById('paymentNote').style.display = 'block';
+            }
+            if (user.role === 'farmer') {
+                document.getElementById('farmerActions').innerHTML = `
+                    <h2>Update Order</h2>
+                    <select id="statusSelect" class="w-100" style="padding: 12px; border-radius: 16px;"> 
+                        <option value="pending" ${order.status==='pending'?'selected':''}>Pending</option>
+                        <option value="confirmed" ${order.status==='confirmed'?'selected':''}>Confirmed</option>
+                        <option value="shipped" ${order.status==='shipped'?'selected':''}>Shipped</option>
+                        <option value="delivered" ${order.status==='delivered'?'selected':''}>Delivered</option>
+                        <option value="cancelled" ${order.status==='cancelled'?'selected':''}>Cancelled</option>
+                    </select>
+                    <input type="text" id="courierInput" placeholder="Courier (e.g., LBC)" value="${order.delivery_courier || ''}" class="w-100" style="margin: 10px 0; padding: 12px;">
+                    <input type="text" id="trackingInput" placeholder="Tracking Number" value="${order.tracking_number || ''}" class="w-100" style="margin: 10px 0; padding: 12px;">
+                    <button id="updateStatusBtn" class="btn">Update Status</button>
+                    <h2 style="margin-top: 20px;">Record Payment</h2>
+                    <input type="number" id="paymentAmount" placeholder="Amount" class="w-100" style="padding: 12px;">
+                    <select id="paymentMethod" class="w-100" style="padding: 12px; margin: 10px 0;">
+                        <option value="cash">Cash</option><option value="gcash">GCash</option><option value="bank_transfer">Bank Transfer</option>
+                    </select>
+                    <textarea id="paymentNotes" placeholder="Notes" rows="2" class="w-100" style="padding: 12px;"></textarea>
+                    <button id="recordPaymentBtn" class="btn">Record Payment</button>
+                `;
+                document.getElementById('updateStatusBtn').onclick = async () => {
+                    await updateOrderStatus(orderId, document.getElementById('statusSelect').value, document.getElementById('courierInput').value, document.getElementById('trackingInput').value);
+                    alert('Status updated'); location.reload();
+                };
+                document.getElementById('recordPaymentBtn').onclick = async () => {
+                    const amount = parseFloat(document.getElementById('paymentAmount').value);
+                    if (isNaN(amount) || amount <= 0) { alert('Enter amount'); return; }
+                    await recordPayment(orderId, amount, document.getElementById('paymentMethod').value, document.getElementById('paymentNotes').value);
+                    alert('Payment recorded'); location.reload();
+                };
+            }
+            const payments = await apiRequest(`payments.php?order_id=${orderId}`, 'GET');
+            if (payments.length) {
+                document.getElementById('paymentHistory').innerHTML = `<h2>Payment History</h2>` + payments.map(p => `<div style="background:#f5f9f5; padding:12px; border-radius:16px; margin-bottom:10px;"><strong>₱${p.amount}</strong> via ${p.payment_method}<br>${p.notes ? ` ${p.notes}<br>` : ''}<small>${new Date(p.payment_date).toLocaleString()}</small></div>`).join('');
+            }
+        }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m)); }
+        loadOrder();
+    </script>
+</body>
+</html>

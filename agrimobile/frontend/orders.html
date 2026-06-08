@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders – AgriMobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container-large">
+        <div class="flex-between" style="margin-bottom: 20px;">
+            <h2>My Orders</h2>
+            <button onclick="history.back()" class="btn btn-secondary">← Back</button>
+        </div>
+        <div id="ordersContainer" class="orders-grid">Loading...</div>
+    </div>
+    <script type="module">
+        import { getMyOrders, getUser } from './js/api.js';
+        import { setLanguage, t } from './js/translations.js';
+        window.setLanguage = setLanguage;
+        const user = getUser();
+        if (!user) location.href = 'login.html';
+        function getStatusClass(status) {
+            const classes = { pending: 'status-pending', confirmed: 'status-confirmed', shipped: 'status-shipped', delivered: 'status-delivered', cancelled: 'status-cancelled' };
+            return classes[status] || 'status-pending';
+        }
+        async function loadOrders() {
+            const orders = await getMyOrders();
+            const container = document.getElementById('ordersContainer');
+            if (orders.length === 0) { container.innerHTML = '<p class="empty-message">No orders yet.</p>'; return; }
+            container.innerHTML = orders.map(o => {
+                const total = (o.price || 0) * o.quantity;
+                return `
+                    <div class="order-card">
+                        <h3> ${escapeHtml(o.product_name)}</h3>
+                        <p> Quantity: ${o.quantity} kg</p>
+                        <p>Total: ₱${total.toFixed(2)}</p>
+                        ${o.buyer_email ? `<p> Buyer: ${escapeHtml(o.buyer_email)}</p>` : ''}
+                        <p>Status: <span class="status-badge ${getStatusClass(o.status)}">${o.status}</span></p>
+                        <p>Received: ${o.product_received ? 'Yes' : 'No'}</p>
+                        <p>Paid: ${o.payment_received ? 'Yes' : 'No'}</p>
+                        <div class="flex-between" style="margin-top: 10px;">
+                            <button class="btn btn-secondary" onclick="window.location.href='order-details.html?id=${o.id}'">View Details</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m)); }
+        loadOrders();
+    </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Farmer Dashboard – AgriMobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container-large">
+        <div class="language-switch">
+            <button class="lang-btn" onclick="setLanguage('en')">🇬🇧 EN</button>
+            <button class="lang-btn" onclick="setLanguage('tl')">🇵🇭 TL</button>
+            <button class="lang-btn" onclick="setLanguage('hil')">🇵🇭 HIL</button>
+        </div>
+        
+        <div class="flex-between" style="margin-bottom: 20px;">
+            <h1><span data-i18n="welcome">Welcome</span>, <span id="userDisplayName"></span>!</h1>
+        </div>
+        
+        <div class="text-center">
+            <button id="voiceBtn" class="voice-btn"><span data-i18n="voiceNav">Voice Navigation</span></button>
+        </div>
+        
+        <div id="notificationArea" class="notification-area"></div>
+        
+        <div class="dashboard-grid">
+            <div class="dashboard-card" data-href="add-product.html">
+                <span class="icon"></span>
+                <span class="title" data-i18n="listProducts">List Products</span>
+            </div>
+            <div class="dashboard-card" data-href="price-recommendation.html">
+                <span class="icon"></span>
+                <span class="title" data-i18n="checkPrice">Check Price Recommendations</span>
+            </div>
+            <div class="dashboard-card" data-href="orders.html">
+                <span class="icon"></span>
+                <span class="title" data-i18n="orders">View Orders</span>
+            </div>
+            <div class="dashboard-card" data-href="profile.html">
+                <span class="icon"></span>
+                <span class="title" data-i18n="profile">My Profile</span>
+            </div>
+        </div>
+        
+        <div class="info-box" style="background:#e8f5e9; padding:15px; border-radius:20px; margin-top:20px; text-align:center;">
+            <p><strong>Quick Tips:</strong> Use voice commands: "list products", "check price", "orders", or "profile"</p>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { getUser, getMyOrders } from './js/api.js';
+        import { setLanguage, t } from './js/translations.js';
+        import { initVoiceButton } from './js/voice.js';
+        
+        window.setLanguage = setLanguage;
+        
+        const user = getUser();
+        if (!user || user.role !== 'farmer') location.href = 'login.html';
+        
+        document.getElementById('userDisplayName').innerText = user.display_name || user.username || user.email;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.textContent = t(el.getAttribute('data-i18n'));
+        });
+        
+        document.querySelectorAll('.dashboard-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const href = card.getAttribute('data-href');
+                if (href) window.location.href = href;
+            });
+        });
+        
+        initVoiceButton('voiceBtn', (cmd) => {
+            const c = cmd.toLowerCase();
+            if (c.includes('list') || c.includes('product')) window.location.href = 'add-product.html';
+            else if (c.includes('price')) window.location.href = 'price-recommendation.html';
+            else if (c.includes('order')) window.location.href = 'orders.html';
+            else if (c.includes('profile')) window.location.href = 'profile.html';
+            else alert('Command not recognized');
+        });
+        
+        let lastCount = 0;
+        async function checkOrders() {
+            try {
+                const orders = await getMyOrders();
+                if (orders.length > lastCount && lastCount !== 0) {
+                    const div = document.createElement('div');
+                    div.className = 'notification';
+                    div.innerHTML = ' <strong>New Order Received!</strong>';
+                    document.getElementById('notificationArea').appendChild(div);
+                    setTimeout(() => div.remove(), 5000);
+                }
+                lastCount = orders.length;
+            } catch(e) {}
+        }
+        checkOrders();
+        setInterval(checkOrders, 10000);
+    </script>
+</body>
+</html>
