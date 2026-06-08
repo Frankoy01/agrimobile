@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products – AgriMobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container-large">
+        <div class="flex-between" style="margin-bottom: 20px;">
+            <h2>Products</h2>
+            <button onclick="history.back()" class="btn btn-secondary">← Back</button>
+        </div>
+        <div id="productsContainer" class="grid">Loading...</div>
+    </div>
+    <script type="module">
+        import { getProducts, placeOrder, getUser } from './js/api.js';
+        import { setLanguage, t } from './js/translations.js';
+        window.setLanguage = setLanguage;
+        const user = getUser();
+        if (!user) location.href = 'login.html';
+        async function load() {
+            const products = await getProducts();
+            const container = document.getElementById('productsContainer');
+            if (products.length === 0) { container.innerHTML = '<p class="empty-message">No products available.</p>'; return; }
+            container.innerHTML = products.map(p => `
+                <div class="card">
+                    <img src="${p.image_url || 'https://via.placeholder.com/300'}" onerror="this.src='https://via.placeholder.com/300'">
+                    <h3>${escapeHtml(p.name)}</h3>
+                    <div class="price">₱${p.price}/kg</div>
+                    <p>${p.description?.substring(0,80) || ''}</p>
+                    <p>${p.origin || 'Philippines'}</p>
+                    <p>Stock: ${p.quantity} kg</p>
+                    <button class="btn" onclick="order(${p.id}, ${p.quantity})">${t('placeOrder')}</button>
+                </div>
+            `).join('');
+        }
+        window.order = async (id, maxQty) => {
+            let qty = prompt('Enter quantity (kg):', '1');
+            if(!qty) return;
+            qty = parseInt(qty);
+            if (isNaN(qty) || qty <=0 || qty > maxQty) { alert('Invalid quantity'); return; }
+            try {
+                await placeOrder(id, qty);
+                alert('Order placed!');
+                load();
+            } catch(err) { alert('Order failed: ' + err.message); }
+        };
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m)); }
+        load();
+    </script>
+</body>
+</html>

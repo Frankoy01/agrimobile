@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile – AgriMobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(145deg, #f5f9f5, #e8f5e9);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 32px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }
+        h1, h2 { color: #2e7d32; margin-bottom: 20px; }
+        h1 { border-left: 5px solid #2e7d32; padding-left: 20px; }
+        .profile-card {
+            background: #fafdfa;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #c8e6c9;
+        }
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 12px 0;
+            align-items: center;
+        }
+        .info-label {
+            width: 140px;
+            font-weight: 600;
+            color: #2e7d32;
+        }
+        .info-value {
+            flex: 1;
+            color: #333;
+        }
+        .info-value input, .info-value textarea {
+            width: 100%;
+            max-width: 350px;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+        }
+        .readonly-text {
+            padding: 10px 0;
+        }
+        .btn-edit, .btn-save, .btn-cancel {
+            background: #ff9800;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-save { background: #2e7d32; }
+        .btn-cancel { background: #ccc; color: #333; }
+        .edit-actions { margin-top: 20px; display: none; }
+        .edit-actions.show { display: block; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: 0.2s;
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(46,125,50,0.12); }
+        .card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin-bottom: 10px;
+        }
+        .price { font-size: 1.3rem; font-weight: bold; color: #2e7d32; margin: 8px 0; }
+        .empty-message { text-align: center; padding: 40px; color: #666; }
+        .error-message { background: #ffebee; color: #c62828; padding: 15px; border-radius: 16px; margin: 20px 0; text-align: center; }
+        @media (max-width: 768px) { .info-label { width: 100%; margin-bottom: 5px; } .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="flex-between">
+            <h1>👤 My Profile</h1>
+            <button onclick="history.back()" class="btn-edit" style="background:#ddd; color:#333;">← Back</button>
+        </div>
+
+        <div class="profile-card">
+            <div class="flex-between">
+                <h2>Profile Information</h2>
+                <button id="editProfileBtn" class="btn-edit"> Edit Profile</button>
+            </div>
+
+            <!-- Display Name (editable) -->
+            <div class="info-row">
+                <div class="info-label">Display Name:</div>
+                <div class="info-value">
+                    <span id="displayNameText" class="readonly-text"></span>
+                    <input type="text" id="displayNameInput" style="display:none;" placeholder="Display Name">
+                </div>
+            </div>
+
+            <!-- Username (editable) -->
+            <div class="info-row">
+                <div class="info-label">Username:</div>
+                <div class="info-value">
+                    <span id="usernameText" class="readonly-text"></span>
+                    <input type="text" id="usernameInput" style="display:none;" placeholder="Username">
+                </div>
+            </div>
+
+            <!-- Email (read-only) -->
+            <div class="info-row">
+                <div class="info-label">Email:</div>
+                <div class="info-value"><span id="userEmail" class="readonly-text"></span></div>
+            </div>
+
+            <!-- Role (read-only) -->
+            <div class="info-row">
+                <div class="info-label">Role:</div>
+                <div class="info-value"><span id="userRole" class="readonly-text"></span></div>
+            </div>
+
+            <!-- Address (editable) -->
+            <div class="info-row">
+                <div class="info-label">Address:</div>
+                <div class="info-value">
+                    <span id="addressText" class="readonly-text"></span>
+                    <textarea id="addressInput" style="display:none;" rows="3" placeholder="Your farm/business address"></textarea>
+                </div>
+            </div>
+
+            <div id="editActions" class="edit-actions">
+                <button id="saveProfileBtn" class="btn-save"> Save Changes</button>
+                <button id="cancelEditBtn" class="btn-cancel">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Farmer Sections (only shown if role = farmer) -->
+        <div id="farmerProductsSection" style="display: none;">
+            <h2>My Listed Products</h2>
+            <div id="myProductsContainer" class="grid">Loading...</div>
+        </div>
+        <div id="farmerOrdersSection" style="display: none;">
+            <h2>Orders on My Products</h2>
+            <div id="farmerOrdersContainer" class="grid">Loading...</div>
+        </div>
+
+        <!-- Buyer Section (only shown if role = buyer) -->
+        <div id="buyerPurchasesSection" style="display: none;">
+            <h2>🛒 My Purchases</h2>
+            <div id="myPurchasesContainer" class="grid">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const API_BASE = 'http://localhost/agrimobile/backend';
+            let currentUser = null;
+            let isEditing = false;
+
+            async function apiCall(endpoint, method = 'GET', body = null) {
+                const options = {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                };
+                if (body) options.body = JSON.stringify(body);
+                const res = await fetch(`${API_BASE}/${endpoint}`, options);
+                const text = await res.text();
+                try {
+                    const data = JSON.parse(text);
+                    if (!res.ok) throw new Error(data.msg || data.error || 'Request failed');
+                    return data;
+                } catch(e) {
+                    console.error('Raw response:', text);
+                    throw new Error('Invalid JSON response from server');
+                }
+            }
+
+            async function loadProfile() {
+                try {
+                    const profile = await apiCall('users.php');
+                    currentUser = profile;
+                    document.getElementById('displayNameText').innerText = profile.display_name || profile.username || 'N/A';
+                    document.getElementById('usernameText').innerText = profile.username || 'N/A';
+                    document.getElementById('userEmail').innerText = profile.email;
+                    let roleText = profile.role === 'farmer' ? 'Farmer' : (profile.role === 'buyer' ? 'Buyer' : (profile.role === 'admin' ? 'Admin' : profile.role));
+                    document.getElementById('userRole').innerText = roleText;
+                    document.getElementById('addressText').innerText = profile.address || 'Not provided';
+                    document.getElementById('addressInput').value = profile.address || '';
+
+                    // Show appropriate sections based on role
+                    if (profile.role === 'farmer') {
+                        document.getElementById('farmerProductsSection').style.display = 'block';
+                        document.getElementById('farmerOrdersSection').style.display = 'block';
+                        loadMyProducts();
+                        loadFarmerOrders();
+                    } else if (profile.role === 'buyer') {
+                        document.getElementById('buyerPurchasesSection').style.display = 'block';
+                        loadMyPurchases();
+                    }
+                } catch(err) {
+                    document.getElementById('userEmail').innerHTML = `<div class="error-message">Error loading profile: ${err.message}</div>`;
+                }
+            }
+
+            async function loadMyProducts() {
+                const container = document.getElementById('myProductsContainer');
+                try {
+                    const products = await apiCall('products.php?my=1');
+                    if (!products.length) { container.innerHTML = '<p class="empty-message">You haven\'t listed any products yet.</p>'; return; }
+                    container.innerHTML = products.map(p => `
+                        <div class="card">
+                            <img src="${p.image_url || 'https://via.placeholder.com/300'}" onerror="this.src='https://via.placeholder.com/300'">
+                            <h3>${escapeHtml(p.name)}</h3>
+                            <div class="price">₱${p.price}/kg</div>
+                            <p>Stock: ${p.quantity} kg</p>
+                            <p>${p.origin || 'Philippines'}</p>
+                        </div>
+                    `).join('');
+                } catch(err) { container.innerHTML = `<p class="error-message">Failed to load products: ${err.message}</p>`; }
+            }
+
+            async function loadFarmerOrders() {
+                const container = document.getElementById('farmerOrdersContainer');
+                try {
+                    const orders = await apiCall('orders.php');
+                    if (!orders.length) { container.innerHTML = '<p class="empty-message">No orders on your products yet.</p>'; return; }
+                    container.innerHTML = orders.map(o => `
+                        <div class="card">
+                            <h3>${escapeHtml(o.product_name)}</h3>
+                            <p><strong>Buyer:</strong> ${o.buyer_name || o.buyer_email}</p>
+                            <p>Quantity: ${o.quantity} kg</p>
+                            <p>Total: ₱${((o.price || 0) * o.quantity).toFixed(2)}</p>
+                            <p>Received: ${o.product_received ? 'Yes' : 'No'}</p>
+                            <p>Paid: ${o.payment_received ? 'Yes' : 'No'}</p>
+                        </div>
+                    `).join('');
+                } catch(err) { container.innerHTML = `<p class="error-message">Failed to load orders: ${err.message}</p>`; }
+            }
+
+            async function loadMyPurchases() {
+                const container = document.getElementById('myPurchasesContainer');
+                try {
+                    const orders = await apiCall('orders.php');
+                    if (!orders.length) {
+                        container.innerHTML = '<p class="empty-message">You haven\'t purchased any products yet.</p>';
+                        return;
+                    }
+                    container.innerHTML = orders.map(o => `
+                        <div class="card">
+                            <img src="${o.image_url || 'https://via.placeholder.com/300'}" onerror="this.src='https://via.placeholder.com/300'">
+                            <h3>${escapeHtml(o.product_name)}</h3>
+                            <p>Quantity: ${o.quantity} kg</p>
+                            <p>Total: ₱${((o.price || 0) * o.quantity).toFixed(2)}</p>
+                            <p>Order date: ${new Date(o.order_date).toLocaleDateString()}</p>
+                            <p>Received: ${o.product_received ? 'Yes' : 'No'}</p>
+                            <p>Payment: ${o.payment_received ? 'Paid' : 'Pending'}</p>
+                        </div>
+                    `).join('');
+                } catch(err) { container.innerHTML = `<p class="error-message">Failed to load purchases: ${err.message}</p>`; }
+            }
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+            }
+
+            // Edit mode handlers
+            const editBtn = document.getElementById('editProfileBtn');
+            editBtn.onclick = () => {
+                if (isEditing) return;
+                isEditing = true;
+                document.getElementById('displayNameText').style.display = 'none';
+                document.getElementById('displayNameInput').style.display = 'block';
+                document.getElementById('displayNameInput').value = currentUser.display_name || '';
+                document.getElementById('usernameText').style.display = 'none';
+                document.getElementById('usernameInput').style.display = 'block';
+                document.getElementById('usernameInput').value = currentUser.username || '';
+                document.getElementById('addressText').style.display = 'none';
+                document.getElementById('addressInput').style.display = 'block';
+                document.getElementById('editActions').classList.add('show');
+                editBtn.style.display = 'none';
+            };
+            document.getElementById('cancelEditBtn').onclick = () => {
+                isEditing = false;
+                document.getElementById('displayNameText').style.display = 'block';
+                document.getElementById('displayNameInput').style.display = 'none';
+                document.getElementById('usernameText').style.display = 'block';
+                document.getElementById('usernameInput').style.display = 'none';
+                document.getElementById('addressText').style.display = 'block';
+                document.getElementById('addressInput').style.display = 'none';
+                document.getElementById('editActions').classList.remove('show');
+                editBtn.style.display = 'block';
+            };
+            document.getElementById('saveProfileBtn').onclick = async () => {
+                const display_name = document.getElementById('displayNameInput').value;
+                const username = document.getElementById('usernameInput').value;
+                const address = document.getElementById('addressInput').value;
+                try {
+                    await apiCall('auth.php?action=update_profile', 'POST', { display_name, username, address });
+                    alert(' Profile updated successfully!');
+                    currentUser.display_name = display_name;
+                    currentUser.username = username;
+                    currentUser.address = address;
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    document.getElementById('displayNameText').innerText = display_name || username;
+                    document.getElementById('usernameText').innerText = username || display_name;
+                    document.getElementById('addressText').innerText = address || 'Not provided';
+                    isEditing = false;
+                    document.getElementById('displayNameText').style.display = 'block';
+                    document.getElementById('displayNameInput').style.display = 'none';
+                    document.getElementById('usernameText').style.display = 'block';
+                    document.getElementById('usernameInput').style.display = 'none';
+                    document.getElementById('addressText').style.display = 'block';
+                    document.getElementById('addressInput').style.display = 'none';
+                    document.getElementById('editActions').classList.remove('show');
+                    editBtn.style.display = 'block';
+                } catch(err) { alert('Error: ' + err.message); }
+            };
+
+            loadProfile();
+        })();
+    </script>
+</body>
+</html>
